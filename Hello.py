@@ -1,50 +1,51 @@
-# Copyright 2018-2022 Streamlit Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+import numpy as np
+import pandas as pd
 import streamlit as st
-from streamlit.logger import get_logger
 
-LOGGER = get_logger(__name__)
+#from pandas_profiling import ProfileReport
+from ydata_profiling import ProfileReport
+from streamlit_pandas_profiling import st_profile_report
 
-def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
+# Web App Title
+st.markdown('''
+# **Exploratory Data Analysis App**
+''')
 
-    st.write("# Welcome to Streamlit! 👋")
+# Upload CSV data
+with st.sidebar.header('1. Upload your CSV data'):
+    uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"])
+    st.sidebar.markdown("""
+[Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
+""")
 
-    st.sidebar.success("Select a demo above.")
-
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
-
-
-if __name__ == "__main__":
-    run()
+# Pandas Profiling Report
+if uploaded_file is not None:
+    @st.cache_data
+    def load_csv():
+        csv = pd.read_csv(uploaded_file)
+        return csv
+    df = load_csv()
+    pr = ProfileReport(df, explorative=True)
+    st.header('**Input DataFrame**')
+    st.write(df)
+    st.write('---')
+    st.header('**Pandas Profiling Report**')
+    st_profile_report(pr)
+else:
+    st.info('Awaiting for CSV file to be uploaded.')
+    if st.button('Press to use Example Dataset'):
+        # Example data
+        @st.cache_data
+        def load_data():
+            a = pd.DataFrame(
+                np.random.rand(100, 5),
+                columns=['a', 'b', 'c', 'd', 'e']
+            )
+            return a
+        df = load_data()
+        pr = ProfileReport(df, explorative=True)
+        st.header('**Input DataFrame**')
+        st.write(df)
+        st.write('---')
+        st.header('**Pandas Profiling Report**')
+        st_profile_report(pr)
